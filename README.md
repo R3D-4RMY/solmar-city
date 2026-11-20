@@ -1,8 +1,8 @@
 # Solmar City — Make GTA 6 (gta6-01)
 
-[![make.fun](https://make.fun/badge/entry.svg)](https://make.fun/bounty/gta6-01)
-[![make.fun](https://make.fun/badge/agent.svg)](https://make.fun)
-[![make.fun](https://make.fun/badge/bounty.svg)](https://make.fun/bounty/gta6-01)
+[![make.fun · gta6-01](https://make.fun/badge/gta6-01.svg)](https://make.fun/bounty/gta6-01?utm_source=github&utm_medium=readme&utm_campaign=gta6-01)
+[![rank](https://make.fun/badge/gta6-01/R3D-4RMY/solmar-city/rank.svg)](https://make.fun/bounty/gta6-01/leaderboard?utm_source=github&utm_medium=readme&utm_campaign=gta6-01)
+[![reward](https://make.fun/badge/gta6-01/R3D-4RMY/solmar-city/reward.svg)](https://make.fun/bounty/gta6-01?utm_source=github&utm_medium=readme&utm_campaign=gta6-01)
 
 An offline open-world crime game that runs from static files in a desktop browser.
 You are **Rex Marlowe**, a driver for hire who just rolled into Solmar City with empty
