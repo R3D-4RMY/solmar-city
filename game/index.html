@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Solmar City — an open-world crime game</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0e13; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+  #game { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+  #status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .hidden { display: none !important; }
+  #hud { position: fixed; top: 0; left: 0; right: 0; display: flex; justify-content: space-between; align-items: flex-start; padding: 14px 18px; pointer-events: none; color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,.8); z-index: 5; }
+  #hud-left { display: flex; flex-direction: column; gap: 4px; }
+  #money { font-size: 30px; font-weight: 800; color: #7dff9a; }
+  #rep { font-size: 15px; font-weight: 700; letter-spacing: 1px; color: #ffd23e; }
+  #hud-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+  #wanted { font-size: 26px; letter-spacing: 4px; color: #9aa3ad; }
+  #wanted.hot { color: #ff5a4e; animation: blink 0.8s steps(2) infinite; }
+  @keyframes blink { 50% { opacity: .45; } }
+  #health { display: flex; align-items: center; gap: 8px; }
+  #health-bar { width: 140px; height: 12px; background: rgba(0,0,0,.55); border: 1px solid rgba(255,255,255,.5); border-radius: 6px; overflow: hidden; }
+  #health-fill { height: 100%; width: 100%; background: #37c978; }
+  #health-fill.low { background: #e5534b; }
+  #health-text { font-size: 14px; font-weight: 700; }
+  #mission { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); width: min(560px, 90vw); background: rgba(8, 12, 20, .78); border: 1px solid rgba(255,255,255,.18); border-radius: 12px; padding: 10px 16px; color: #fff; z-index: 5; pointer-events: none; }
+  #mission-title { font-size: 13px; font-weight: 800; letter-spacing: 1px; color: #ffd23e; text-transform: uppercase; }
+  #mission-text { font-size: 15px; margin-top: 3px; line-height: 1.35; }
+  #mission-dist { font-size: 13px; color: #9fd0ff; margin-top: 3px; }
+  #prompt { position: fixed; left: 50%; bottom: 118px; transform: translateX(-50%); background: rgba(8, 12, 20, .85); color: #fff; border: 1px solid rgba(255,255,255,.35); border-radius: 8px; padding: 7px 14px; font-size: 15px; font-weight: 600; z-index: 5; opacity: 0; transition: opacity .15s; pointer-events: none; }
+  #prompt.show { opacity: 1; }
+  #speed { position: fixed; right: 210px; bottom: 22px; font-size: 26px; font-weight: 800; color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,.8); z-index: 5; pointer-events: none; }
+  #minimap { position: fixed; right: 16px; bottom: 16px; width: 180px; height: 180px; border: 2px solid rgba(255,255,255,.5); border-radius: 10px; z-index: 5; box-shadow: 0 2px 12px rgba(0,0,0,.5); }
+  #toast { position: fixed; top: 74px; left: 50%; transform: translateX(-50%); background: rgba(8, 12, 20, .88); color: #ffd23e; border: 1px solid rgba(255,210,62,.5); border-radius: 10px; padding: 10px 18px; font-size: 16px; font-weight: 700; z-index: 6; opacity: 0; transition: opacity .25s; pointer-events: none; }
+  #toast.show { opacity: 1; }
+  .overlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(5, 8, 14, .72); z-index: 10; }
+  .panel { width: min(620px, 92vw); background: #12161f; border: 1px solid rgba(255,255,255,.16); border-radius: 16px; padding: 34px 38px; color: #eef1f5; text-align: center; box-shadow: 0 12px 48px rgba(0,0,0,.6); }
+  .panel h1 { margin: 0 0 4px; font-size: 52px; letter-spacing: 2px; color: #ffd23e; }
+  .panel h2 { margin: 0 0 14px; font-size: 28px; }
+  .panel p { font-size: 16px; line-height: 1.55; color: #c6ccd6; margin: 10px 0; }
+  .panel .controls { font-size: 14px; line-height: 1.9; color: #9fd0ff; }
+  .panel .controls b { color: #fff; }
+  .panel button { display: block; width: 100%; margin: 10px 0 0; padding: 13px; font-size: 17px; font-weight: 700; color: #111; background: #ffd23e; border: none; border-radius: 10px; cursor: pointer; }
+  .panel button.secondary { background: #2a3040; color: #eef1f5; }
+  .panel button:hover { filter: brightness(1.1); }
+  #mute-btn { position: fixed; left: 16px; bottom: 16px; z-index: 6; background: rgba(8,12,20,.7); color: #fff; border: 1px solid rgba(255,255,255,.3); border-radius: 8px; padding: 8px 12px; font-size: 14px; cursor: pointer; }
+</style>
+<script type="importmap">
+{ "imports": { "three": "./vendor/three.module.min.js" } }
+</script>
+</head>
+<body>
+<canvas id="game" aria-label="Solmar City: an open-world crime game. Walk and drive around the city, take missions, dodge the police."></canvas>
+<p id="status" role="status" aria-live="polite"></p>
+
+<div id="hud">
+  <div id="hud-left">
+    <div id="money">$0</div>
+    <div id="rep">REP 0</div>
+  </div>
+  <div id="hud-right">
+    <div id="wanted">☆☆☆☆☆</div>
+    <div id="health"><span>HP</span><div id="health-bar"><div id="health-fill"></div></div><span id="health-text">100</span></div>
+  </div>
+</div>
+
+<div id="mission">
+  <div id="mission-title"></div>
+  <div id="mission-text"></div>
+  <div id="mission-dist"></div>
+</div>
+<div id="prompt"></div>
+<div id="speed" class="hidden">0 km/h</div>
+<canvas id="minimap" width="180" height="180"></canvas>
+<div id="toast"></div>
+<button id="mute-btn">🔊 Mute (M)</button>
+
+<div id="title-screen" class="overlay">
+  <div class="panel">
+    <h1>SOLMAR CITY</h1>
+    <p>You are <b>Rex Marlowe</b>, a driver for hire who just rolled into Solmar City with
+    empty pockets and a fast car. Your contact <b>Mara Voss</b> has five jobs for you —
+    fares, packages, a stolen sports car, the heat, and one big score. Earn cash, build
+    your reputation, and don't get caught.</p>
+    <p class="controls"><b>W A S D</b> move / drive &nbsp;•&nbsp; <b>Shift</b> run &nbsp;•&nbsp; <b>E</b> enter / exit car &nbsp;•&nbsp; <b>F</b> punch &nbsp;•&nbsp; <b>Space</b> brake &nbsp;•&nbsp; <b>H</b> horn &nbsp;•&nbsp; <b>Drag mouse</b> orbit camera &nbsp;•&nbsp; <b>Wheel</b> zoom &nbsp;•&nbsp; <b>P</b> pause &nbsp;•&nbsp; <b>M</b> mute</p>
+    <p id="title-save"></p>
+    <div id="title-buttons">
+      <button id="continue-btn">Continue</button>
+      <button id="new-btn">New Game</button>
+    </div>
+  </div>
+</div>
+
+<div id="pause-screen" class="overlay hidden">
+  <div class="panel">
+    <h2>Paused</h2>
+    <p>The city will wait for you.</p>
+    <button id="pause-resume-btn">Resume</button>
+    <button id="pause-quit-btn" class="secondary">Save &amp; quit to title</button>
+  </div>
+</div>
+
+<div id="end-screen" class="overlay hidden">
+  <div class="panel">
+    <h2 id="end-title">BUSTED</h2>
+    <p id="end-text"></p>
+    <button id="resume-btn">Back to the streets</button>
+  </div>
+</div>
+
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>
